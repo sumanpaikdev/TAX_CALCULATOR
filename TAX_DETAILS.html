@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Tax & Audit Master - FY 2025-26</title>
+    <style>
+        :root { --primary: #1a73e8; --danger: #d93025; --success: #188038; --warning: #f29900; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 15px; color: #3c4043; }
+        .container { background: white; max-width: 900px; margin: 0 auto; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        
+        h2 { text-align: center; color: var(--primary); margin-bottom: 5px; }
+        .year-tag { text-align: center; font-weight: bold; color: #5f6368; margin-bottom: 25px; font-size: 0.9rem; }
+
+        /* Input Section */
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #dadce0; }
+        .input-group label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 14px; border: 2px solid #dfe1e5; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; box-sizing: border-box; }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        /* Audit Badge */
+        .audit-container { margin: 20px 0; }
+        .audit-badge { padding: 15px; border-radius: 8px; font-weight: bold; text-align: center; border: 1px solid transparent; }
+        .safe { background: #e6f4ea; color: var(--success); border-color: #ceead6; }
+        .warn { background: #fef7e0; color: #b06000; border-color: #feefc3; }
+        .crit { background: #fce8e6; color: var(--danger); border-color: #fad2cf; }
+
+        /* Table & Mobile Fix */
+        .table-section { margin-top: 25px; }
+        .rule-text { font-size: 0.8rem; color: #70757a; font-style: italic; margin-bottom: 10px; }
+        .table-wrapper { width: 100%; overflow-x: auto; border: 1px solid #dadce0; border-radius: 8px; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th { background: #f8f9fa; padding: 12px; text-align: left; font-size: 0.85rem; border-bottom: 2px solid #dee2e6; }
+        td { padding: 12px; border-bottom: 1px solid #f1f3f4; font-size: 0.9rem; }
+        
+        /* Totals */
+        .total-box { margin-top: 20px; border-radius: 8px; overflow: hidden; }
+        .row-total { display: flex; justify-content: space-between; padding: 12px 20px; background: #fff; border-bottom: 1px solid #eee; }
+        .grand-total { background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; }
+
+        /* Summary Rules Footer */
+        .footer-rules { margin-top: 30px; padding: 20px; background: #3c4043; color: white; border-radius: 12px; }
+        .footer-rules h3 { margin-top: 0; color: #8ab4f8; font-size: 1.1rem; }
+        .footer-rules ul { padding-left: 20px; margin-bottom: 0; }
+        .footer-rules li { margin-bottom: 10px; font-size: 0.85rem; line-height: 1.4; }
+
+        @media (max-width: 600px) { .input-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Professional Tax Estimator</h2>
+    <div class="year-tag">Assessment Year 2026-27 (Financial Year 2025-26)</div>
+
+    <div class="input-grid">
+        <div class="input-group">
+            <label>Total Gross Receipts (₹)</label>
+            <input type="number" id="grossInput" placeholder="e.g. 7000000" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>Profit Declaration Type</label>
+            <select id="profitType" onchange="calculate()">
+                <option value="0.50">Presumptive 50% (Standard)</option>
+                <option value="0.75">Presumptive 75% (Conservative)</option>
+                <option value="0.40">Below 50% (Audit Likely Required)</option>
+                <option value="actual">Actual Profit (Books Maintained)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="audit-container">
+        <div class="rule-text">Audit Rule (Sec 44AB): Based on gross receipts and profit margin.</div>
+        <div id="auditStatus" class="audit-badge safe">Enter an amount to check audit status</div>
+    </div>
+
+    <div class="table-section">
+        <div class="rule-text">Tax Calculation: New Tax Regime (Default) slabs for FY 2025-26.</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bucket</th>
+                        <th>Income Range</th>
+                        <th>Rate</th>
+                        <th>Calculation Formula</th>
+                        <th>Tax Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="total-box">
+        <div class="row-total">
+            <span>Base Tax (Total of Buckets)</span>
+            <span id="resBase">₹0</span>
+        </div>
+        <div class="row-total" style="color: var(--danger);">
+            <span>Health & Education Cess (4% of Tax)</span>
+            <span id="resCess">₹0</span>
+        </div>
+        <div class="row-total grand-total">
+            <span>Final Tax Payable</span>
+            <span id="resFinal">₹0</span>
+        </div>
+    </div>
+
+    <div class="footer-rules">
+        <h3>Steps & Important Rules to Remember:</h3>
+        <ul>
+            <li><strong>Step 1: Check 44ADA Eligibility:</strong> Only for specific professions (IT, Medical, Legal, Engineering, etc.).</li>
+            <li><strong>Step 2: Digital Receipt Rule:</strong> The ₹75 Lakh limit only applies if 95% of your receipts are digital. If cash is > 5%, the limit drops to ₹50 Lakh.</li>
+            <li><strong>Step 3: Profit Declaration:</strong> Under 44ADA, you declare 50% as income. You cannot claim extra expenses (like laptop, rent, travel) because the 50% deduction already covers all of them.</li>
+            <li><strong>Step 4: Audit Deadline:</strong> If an audit is required, it must be completed by a CA by September 30th.</li>
+            <li><strong>Step 5: Advance Tax:</strong> For 44ADA, you must pay your entire tax in one installment on or before March 15th of the financial year.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+function calculate() {
+    const gross = parseFloat(document.getElementById('grossInput').value) || 0;
+    const pType = document.getElementById('profitType').value;
+    
+    // Determine Profit
+    let pRate = (pType === 'actual') ? 0.50 : parseFloat(pType);
+    let profit = gross * pRate;
+
+    // 1. AUDIT LOGIC (Detailed)
+    const badge = document.getElementById('auditStatus');
+    if (gross === 0) {
+        badge.className = "audit-badge safe";
+        badge.innerText = "Enter amount to see status";
+    } else if (gross > 7500000) {
+        badge.className = "audit-badge crit";
+        badge.innerHTML = "🚨 AUDIT MANDATORY: Gross receipts exceed ₹75 Lakh limit for professionals.";
+    } else if (pRate < 0.50) {
+        badge.className = "audit-badge crit";
+        badge.innerHTML = "⚠️ AUDIT REQUIRED: You are declaring profit below the 50% presumptive limit.";
+    } else if (gross > 5000000 && gross <= 7500000) {
+        badge.className = "audit-badge warn";
+        badge.innerHTML = "📝 CONDITIONAL: Audit not required ONLY if 95% of receipts are digital.";
+    } else {
+        badge.className = "audit-badge safe";
+        badge.innerHTML = "✅ SAFE: No Tax Audit required under Section 44ADA.";
+    }
+
+    // 2. TAX SLABS (FY 2025-26 New Regime)
+    const slabs = [
+        { b: "B1", range: "0 - 4 Lakh", limit: 400000, rate: 0, formula: "First 4L is Exempt" },
+        { b: "B2", range: "4 - 8 Lakh", limit: 400000, rate: 0.05 },
+        { b: "B3", range: "8 - 12 Lakh", limit: 400000, rate: 0.10 },
+        { b: "B4", range: "12 - 16 Lakh", limit: 400000, rate: 0.15 },
+        { b: "B5", range: "16 - 20 Lakh", limit: 400000, rate: 0.20 },
+        { b: "B6", range: "20 - 24 Lakh", limit: 400000, rate: 0.25 },
+        { b: "B7", range: "Above 24 Lakh", limit: Infinity, rate: 0.30 }
+    ];
+
+    let remaining = profit;
+    let totalBase = 0;
+    let tableHtml = "";
+
+    slabs.forEach(s => {
+        let taxable = Math.max(0, Math.min(remaining, s.limit));
+        let tax = taxable * s.rate;
+        let formula = s.formula || (taxable.toLocaleString('en-IN') + " × " + (s.rate*100) + "%");
+        
+        tableHtml += `<tr>
+            <td>${s.b}</td>
+            <td>${s.range}</td>
+            <td>${s.rate*100}%</td>
+            <td>${taxable > 0 ? formula : "—"}</td>
+            <td>₹${tax.toLocaleString('en-IN')}</td>
+        </tr>`;
+        
+        totalBase += tax;
+        remaining -= taxable;
+    });
+
+    const cess = totalBase * 0.04;
+    document.getElementById('tableBody').innerHTML = tableHtml;
+    document.getElementById('resBase').innerText = "₹" + totalBase.toLocaleString('en-IN');
+    document.getElementById('resCess').innerText = "₹" + cess.toLocaleString('en-IN');
+    document.getElementById('resFinal').innerText = "₹" + (totalBase + cess).toLocaleString('en-IN');
+}
+</script>
+</body>
+</html>
