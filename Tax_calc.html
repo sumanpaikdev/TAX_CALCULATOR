@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>44ADA Tax Calculator (FY 2025-26)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #34495e; }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; transition: border-color 0.3s; }
+        input:focus { border-color: #3498db; outline: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #7f8c8d; font-size: 14px; }
+        .result-row { font-weight: bold; color: #27ae60; background-color: #f0fff4; }
+        .summary { margin-top: 20px; padding: 15px; background: #eef2f7; border-radius: 8px; }
+        .highlight { font-size: 1.2em; color: #e74c3c; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Presumptive Tax Calculator</h2>
+    <p style="font-size: 0.9em; color: #666; text-align: center;">New Tax Regime (FY 2025-26) | Sec 44ADA (50% Profit)</p>
+    
+    <div class="input-group">
+        <label>Enter Total Gross Receipts (₹)</label>
+        <input type="number" id="grossInput" placeholder="e.g. 7000000" oninput="calculateTax()">
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Bucket (Slab)</th>
+                <th>Rate</th>
+                <th>Tax Amount</th>
+            </tr>
+        </thead>
+        <tbody id="taxTable">
+            </tbody>
+    </table>
+
+    <div class="summary">
+        <p>Presumptive Profit (50%): <span id="profit">₹0</span></p>
+        <p>Base Tax: <span id="baseTax">₹0</span></p>
+        <p>Cess (4%): <span id="cess">₹0</span></p>
+        <p class="highlight">Total Tax Payable: <span id="totalFinal">₹0</span></p>
+    </div>
+</div>
+
+<script>
+function calculateTax() {
+    let gross = parseFloat(document.getElementById('grossInput').value) || 0;
+    let profit = gross * 0.50;
+    document.getElementById('profit').innerText = "₹" + profit.toLocaleString('en-IN');
+
+    const slabs = [
+        { limit: 400000, rate: 0.00, label: "0 - 4 Lakh" },
+        { limit: 400000, rate: 0.05, label: "4 - 8 Lakh" },
+        { limit: 400000, rate: 0.10, label: "8 - 12 Lakh" },
+        { limit: 400000, rate: 0.15, label: "12 - 16 Lakh" },
+        { limit: 400000, rate: 0.20, label: "16 - 20 Lakh" },
+        { limit: 400000, rate: 0.25, label: "20 - 24 Lakh" },
+        { limit: Infinity, rate: 0.30, label: "Above 24 Lakh" }
+    ];
+
+    let remaining = profit;
+    let totalBaseTax = 0;
+    let tableHtml = "";
+
+    slabs.forEach(slab => {
+        let taxableInSlab = 0;
+        if (remaining > 0) {
+            taxableInSlab = Math.min(remaining, slab.limit);
+            let taxForSlab = taxableInSlab * slab.rate;
+            totalBaseTax += taxForSlab;
+            remaining -= taxableInSlab;
+            
+            tableHtml += `<tr>
+                <td>${slab.label}</td>
+                <td>${(slab.rate * 100)}%</td>
+                <td>₹${taxForSlab.toLocaleString('en-IN')}</td>
+            </tr>`;
+        }
+    });
+
+    let cess = totalBaseTax * 0.04;
+    let finalTax = totalBaseTax + cess;
+
+    document.getElementById('taxTable').innerHTML = tableHtml;
+    document.getElementById('baseTax').innerText = "₹" + totalBaseTax.toLocaleString('en-IN');
+    document.getElementById('cess').innerText = "₹" + cess.toLocaleString('en-IN');
+    document.getElementById('totalFinal').innerText = "₹" + finalTax.toLocaleString('en-IN');
+}
+</script>
+
+</body>
+</html>
