@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax & Audit Tool (Mobile Fixed)</title>
+    <style>
+        /* Base styles */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
+        .container { background: white; max-width: 900px; margin: 10px auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #1a73e8; margin-top: 0; }
+
+        /* Input grid: 2 columns on desktop, 1 on mobile */
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; padding: 15px; background: #eef2f7; border-radius: 8px; }
+        label { font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+
+        /* SECRET FIX: Responsive Table Wrapper */
+        .table-wrapper { 
+            width: 100%; 
+            overflow-x: auto; /* Enable horizontal scroll on mobile */
+            -webkit-overflow-scrolling: touch; /* Smooth scroll for iOS */
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 650px; /* Forces scroll on narrow screens */ }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        th { background: #f8f9fa; color: #555; }
+
+        /* Audit status badges */
+        .audit-badge { text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; font-size: 0.95rem; }
+        .safe { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 600px) {
+            .input-grid { grid-template-columns: 1fr; }
+            h2 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Professional Tax Tool</h2>
+    
+    <div class="input-grid">
+        <div>
+            <label>Gross Receipts (₹)</label>
+            <input type="number" id="grossInput" value="7000000" oninput="calculate()">
+        </div>
+        <div>
+            <label>Declare Profit %</label>
+            <select id="profitPercent" onchange="calculate()">
+                <option value="0.50">50% (Standard)</option>
+                <option value="0.40">40% (Audit Req)</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="auditStatus" class="audit-badge">Checking Status...</div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Bucket</th>
+                    <th>Range</th>
+                    <th>Rate</th>
+                    <th>Calculation</th>
+                    <th>Tax</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+            <tfoot>
+                <tr style="font-weight:bold;"><td colspan="4" align="right">Base Tax:</td><td id="baseTax">₹0</td></tr>
+                <tr style="color:red; font-size:0.8rem;"><td colspan="4" align="right">Cess (4%):</td><td id="cess">₹0</td></tr>
+                <tr style="background:#1a73e8; color:white; font-weight:bold;"><td colspan="4" align="right">Total Payable:</td><td id="totalPayable">₹0</td></tr>
+            </tfoot>
+        </table>
+    </div>
+    <p style="text-align:center; font-size:0.7rem; color:#888; margin-top:10px;">(Swipe table left/right on phone to see full details)</p>
+</div>
+
+<script>
+function calculate() {
+    const gross = parseFloat(document.getElementById('grossInput').value) || 0;
+    const pRate = parseFloat(document.getElementById('profitPercent').value);
+    const profit = gross * pRate;
+    
+    // Audit Status Logic
+    let auditMsg = "✅ Audit NOT Required";
+    let auditClass = "safe";
+    if (gross > 7500000) { auditMsg = "🚨 Audit MANDATORY (> ₹75L)"; auditClass = "danger"; }
+    else if (pRate < 0.50) { auditMsg = "⚠️ Audit MANDATORY (Profit < 50%)"; auditClass = "warning"; }
+    
+    const badge = document.getElementById('auditStatus');
+    badge.innerText = auditMsg;
+    badge.className = "audit-badge " + auditClass;
+
+    // Tax Slab Logic
+    const slabs = [
+        { label: "B1", range: "0-4L", limit: 400000, rate: 0 },
+        { label: "B2", range: "4-8L", limit: 400000, rate: 0.05 },
+        { label: "B3", range: "8-12L", limit: 400000, rate: 0.10 },
+        { label: "B4", range: "12-16L", limit: 400000, rate: 0.15 },
+        { label: "B5", range: "16-20L", limit: 400000, rate: 0.20 },
+        { label: "B6", range: "20-24L", limit: 400000, rate: 0.25 },
+        { label: "B7", range: "24L+", limit: Infinity, rate: 0.30 }
+    ];
+
+    let remaining = profit;
+    let totalBase = 0;
+    let html = "";
+
+    slabs.forEach(s => {
+        let taxable = Math.max(0, Math.min(remaining, s.limit));
+        let tax = taxable * s.rate;
+        totalBase += tax;
+        remaining -= taxable;
+        html += `<tr><td>${s.label}</td><td>${s.range}</td><td>${s.rate*100}%</td><td>${taxable.toLocaleString('en-IN')} × ${s.rate*100}%</td><td>₹${tax.toLocaleString('en-IN')}</td></tr>`;
+    });
+
+    document.getElementById('tableBody').innerHTML = html;
+    document.getElementById('baseTax').innerText = "₹" + totalBase.toLocaleString('en-IN');
+    document.getElementById('cess').innerText = "₹" + (totalBase * 0.04).toLocaleString('en-IN');
+    document.getElementById('totalPayable').innerText = "₹" + (totalBase * 1.04).toLocaleString('en-IN');
+}
+calculate();
+</script>
+</body>
+</html>
