@@ -204,6 +204,49 @@ function calculatePro() {
         </tr>
     `;
 }
+    function calculateTax() {
+    const gross = parseFloat(document.getElementById('grossInput').value) || 0;
+    const profit = gross * 0.50; // Presumptive Profit (Section 44ADA)
+    
+    let baseTax = 0;
+
+    // 1. Calculate Slab Tax (FY 2025-26 New Regime)
+    if (profit <= 400000) {
+        baseTax = 0;
+    } else if (profit <= 800000) {
+        baseTax = (profit - 400000) * 0.05;
+    } else if (profit <= 1200000) {
+        baseTax = 20000 + (profit - 800000) * 0.10;
+    } else if (profit <= 1600000) {
+        baseTax = 60000 + (profit - 1200000) * 0.15;
+    } else if (profit <= 2000000) {
+        baseTax = 120000 + (profit - 1600000) * 0.20;
+    } else if (profit <= 2400000) {
+        baseTax = 200000 + (profit - 2000000) * 0.25;
+    } else {
+        baseTax = 300000 + (profit - 2400000) * 0.30;
+    }
+
+    // 2. Apply Section 87A Rebate (The Zero-Tax Rule)
+    let netTax = baseTax;
+    if (profit <= 1200000) {
+        netTax = 0; // Rebate wipes out all tax up to 12L profit
+    } 
+    // Marginal Relief logic for income slightly above 12L
+    else if (profit > 1200000 && profit < 1275000) {
+        let extraOver12L = profit - 1200000;
+        if (baseTax > extraOver12L) {
+            netTax = extraOver12L; 
+        }
+    }
+
+    const cess = netTax * 0.04;
+    const finalTotal = netTax + cess;
+
+    // Display the results in your HTML elements
+    document.getElementById('displayProfit').innerText = "₹" + profit.toLocaleString('en-IN');
+    document.getElementById('displayTax').innerText = "₹" + finalTotal.toLocaleString('en-IN');
+    }
 </script>
 </body>
 </html>
